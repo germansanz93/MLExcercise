@@ -14,3 +14,11 @@ def load_housing_data():
   return pd.read_csv(Path("datasets/housing/housing.csv"))
 
 housing = load_housing_data()
+print("head: ")
+print(housing.head(), "\n")
+print("info: ")
+print(housing.info(), "\n")
+print("ocean_proximity categories: ")
+print(housing["ocean_proximity"].value_counts(), "\n")
+print("describe: ")
+print(housing.describe(), "\n") # Los nulls son ignorados, std es la desviacion estandar
