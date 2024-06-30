@@ -5,7 +5,7 @@ import urllib.request
 import matplotlib.pyplot as plt
 import numpy as np
 from zlib import crc32
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 
 def load_housing_data():
   tarball_path = Path("datasets/housing.tgz")
@@ -96,3 +96,24 @@ if __name__ == '__main__':
   plt.xlabel("Income category")
   plt.ylabel("Number of districts")
   plt.savefig("income_cat.png")
+
+  '''
+    sklearn provides us with a method called split that returns an iterator over differetn training/test splits of the same data
+  '''
+  splitter = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
+  strat_splits = []
+  for train_index, test_index in splitter.split(housing, housing["income_cat"]):
+    strat_train_set_n = housing.iloc[train_index]
+    strat_test_set_n = housing.iloc[test_index]
+    strat_splits.append([strat_train_set_n, strat_test_set_n])
+
+  # For now we can just use the first split
+  strat_train_set, strat_test_set = strat_splits[0]
+
+  # Or, since stratified sampling is fairly common, there’s a shorter way to get a single split using the train_test_split() function with the stratify argument
+  strat_train_set, strat_test_set = train_test_split(housing, test_size=0.2, stratify=housing["income_cat"], random_state=42)
+  print(strat_test_set["income_cat"].value_counts() / len(strat_test_set))
+
+  # we can drop income_cat column now. we wont use it again
+  for set_ in (strat_train_set, strat_test_set):
+    set_.drop("income_cat", axis=1, inplace=True)
