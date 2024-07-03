@@ -117,3 +117,24 @@ if __name__ == '__main__':
   # we can drop income_cat column now. we wont use it again
   for set_ in (strat_train_set, strat_test_set):
     set_.drop("income_cat", axis=1, inplace=True)
+
+  # copy of the original training set to execute some transformations without modifying the original
+  housing = strat_train_set.copy()
+
+  # Scatterplot of geographical data
+  plt.clf() 
+  housing.plot(kind="scatter", x="longitude", y="latitude", grid=True)
+  plt.savefig("geo_scatter.png")
+
+  # setting alpha to visualize better the most populated places
+  plt.clf()
+  housing.plot(kind="scatter", x="longitude", y="latitude", grid=True, alpha=0.2)
+  plt.savefig("geo_scatter_alpha.png")
+
+  # plotting population as size and median_house_value as color
+  plt.clf()
+  housing.plot(kind="scatter", x="longitude", y="latitude", grid=True,
+               s=housing["population"] / 100, label="population", 
+               c="median_house_value", cmap="jet", colorbar=True,
+               legend=True, sharex=False, figsize=(10, 7))
+  plt.savefig("population_house_value.png")
