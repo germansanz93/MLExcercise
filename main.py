@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from zlib import crc32
 from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
+from pandas.plotting import scatter_matrix
 
 def load_housing_data():
   tarball_path = Path("datasets/housing.tgz")
@@ -138,3 +139,19 @@ if __name__ == '__main__':
                c="median_house_value", cmap="jet", colorbar=True,
                legend=True, sharex=False, figsize=(10, 7))
   plt.savefig("population_house_value.png")
+
+  # Since the dataset is not too large, i can compute the standard correlation coefficient between every pair of attributes to see if i can identify some correlations
+  # This coefficient ranges from -1 to 1, indicating a strong positive correlation for values near 1 and strong negative correlation for numbers near -1
+  corr_matrix = housing.corr(numeric_only=True)
+  print(corr_matrix["median_house_value"].sort_values(ascending=False))
+
+  # Another way to check for correlation is to use pandas
+  plt.clf()
+  attributes = ["median_house_value", "median_income", "total_rooms", "housing_median_age"]
+  scatter_matrix(housing[attributes], figsize=(12, 8))
+  plt.savefig("pandas_scatter_matrix.png")
+
+  # We see a strong correlation between median_house_value and median_income
+  plt.clf()
+  housing.plot(kind="scatter", x="median_income", y="median_house_value", alpha=0.1, grid=True)
+  plt.savefig("mhv_vs_mi.png")
