@@ -7,6 +7,7 @@ import numpy as np
 from zlib import crc32
 from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 from pandas.plotting import scatter_matrix
+from sklearn.impute import SimpleImputer
 
 def load_housing_data():
   tarball_path = Path("datasets/housing.tgz")
@@ -164,3 +165,29 @@ if __name__ == '__main__':
   corr_matrix = housing.corr(numeric_only=True)
   print(corr_matrix["median_house_value"].sort_values(ascending=False))
   
+  # revert to a clean training set. With drop i separate predictors and labels(median house value) and create a copy of strat_train_set without affecting it
+  housing = strat_train_set.drop("median_house_value", axis=1)
+  housing_labels = strat_train_set["median_house_value"].copy()
+
+  # We noticed earlier that total_bedrooms has some missing values, so we can get rid of the corresponding districts, get rid of the whole attribute or set the missing values to some value (zero, the mean, the median)
+  housing.dropna(subset=["total_bedrooms"], inplace=True) # Option 1
+  housing.drop("total_bedrooms", axis=1) # Option 2
+  median = housing["total_bedrooms"].median()
+  housing["total_bedrooms"].fillna(median, inplace=True)
+
+  # we decided the third option because it is the least destructive but using scikit-learn class called SimpleImputer
+  imputer = SimpleImputer(strategy="median")
+
+  # we cant compute median on non numerical attributes, so we need to create a copy of the data but only with numerical attributes
+  housing_num = housing.select_dtypes(include=[np.number])
+
+  imputer.fit(housing_num)
+  print(imputer.statistics_)
+  print(housing_num.median().values)
+
+  # Now i can use this "trained" imputer to transform the training set by replacing missing values with the learned medias
+  X = imputer.transform(housing_num)
+
+  # sklearn.impute has more powerful imputers like KNNImputer or IterativeImputer
+  # sklearn transformers returns Numpy arrays, so we need to wrap it in a dataframe and recover column names
+  housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
