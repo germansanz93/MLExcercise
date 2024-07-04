@@ -155,3 +155,12 @@ if __name__ == '__main__':
   plt.clf()
   housing.plot(kind="scatter", x="median_income", y="median_house_value", alpha=0.1, grid=True)
   plt.savefig("mhv_vs_mi.png")
+
+  # Creating some new combinations to seek for correlation
+  housing["rooms_per_house"] = housing["total_rooms"] / housing["households"]
+  housing["bedrooms_ratio"] = housing["total_bedrooms"] / housing["total_rooms"]
+  housing["people_per_house"] = housing["population"] / housing["households"]
+
+  corr_matrix = housing.corr(numeric_only=True)
+  print(corr_matrix["median_house_value"].sort_values(ascending=False))
+  
