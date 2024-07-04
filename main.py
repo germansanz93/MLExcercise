@@ -8,6 +8,7 @@ from zlib import crc32
 from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 from pandas.plotting import scatter_matrix
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
 
 def load_housing_data():
   tarball_path = Path("datasets/housing.tgz")
@@ -191,3 +192,15 @@ if __name__ == '__main__':
   # sklearn.impute has more powerful imputers like KNNImputer or IterativeImputer
   # sklearn transformers returns Numpy arrays, so we need to wrap it in a dataframe and recover column names
   housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
+
+  housing_cat = housing[["ocean_proximity"]] # This is a categorical attribute, it has a limited number of possible values
+  print(housing_cat.head(8))
+
+  ordinal_encoder = OrdinalEncoder()
+  housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
+  print(housing_cat_encoded[:8])
+  print(ordinal_encoder.categories_) #One problem with this representation is that ML algorithms will assume that two nearby values are more similar than two distant values, but categories o and 4 are more similar than 0 and 1 here
+  
+  # One solution here is to create one binary attribute per category. This is called one-hot encoding. The new attributes are sometimes called dummy attributes.
+  cat_encoder = OneHotEncoder()
+  housing_cat_1hot = cat_encoder.fit_transform(housing_cat) #is a SciPy sparse matrix, instead of a NumPy array
