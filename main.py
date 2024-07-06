@@ -8,7 +8,7 @@ from zlib import crc32
 from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 from pandas.plotting import scatter_matrix
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, MinMaxScaler, StandardScaler
 
 def load_housing_data():
   tarball_path = Path("datasets/housing.tgz")
@@ -204,3 +204,23 @@ if __name__ == '__main__':
   # One solution here is to create one binary attribute per category. This is called one-hot encoding. The new attributes are sometimes called dummy attributes.
   cat_encoder = OneHotEncoder()
   housing_cat_1hot = cat_encoder.fit_transform(housing_cat) #is a SciPy sparse matrix, instead of a NumPy array
+  # A sparse matrix is a very efficient representation for matrices that contain mostly zeros. Indeed, internally it only stores the nonzero values and their positions. 
+  print(housing_cat_1hot.toarray())
+  print(cat_encoder.categories_)
+  print(cat_encoder.feature_names_in_) # SciKit-Learn stores the column names here
+  print(cat_encoder.get_feature_names_out()) # Build a dataframe around transformer's output
+
+  # We need to normalize all values between zero because our numeric attributes has very different scales.
+  # We can use MinMaxScaler. It substracts the minimum and divide by the difference, giving us a range from 0 to 1. We can set the resulting range with feature_range
+  min_max_scaler = MinMaxScaler(feature_range=(-1, 1))
+  housing_num_min_max_scaled = min_max_scaler.fit_transform(housing_num)
+
+  # Also we can use standardization. Standardization substracts the mean value (values now have a zero mean), then divides the result
+  # by the standard deviation (standardized values have a standard deviation equal to 1). This solution does not restrict values to
+  # a specific range but its much less affected by outliers
+  std_scaler = StandardScaler()
+  housing_num_std_scaled = std_scaler.fit_transform(housing_num)
+
+  # When a feature’s distribution has a heavy tail (i.e., when values far from the mean are not exponentially rare), both min-max scaling and standardization will squash most values into a small range. Machine learning models generally don’t like this at all, as you will see in Chapter 4. So before you scale the feature, you should first transform it to shrink the heavy tail, and if possible to make the distribution roughly symmetrical. For example, a common way to do this for positive features with a heavy tail to the right is to replace the feature with its square root (or raise the feature to a power between 0 and 1). If the feature has a really long and heavy tail, such as a power law distribution, then replacing the feature with its logarithm may help. For example, the population feature roughly follows a power law: districts with 10,000 inhabitants are only 10 times less frequent than districts with 1,000 inhabitants, not exponentially less frequent. Figure 2-17 shows how much better this feature looks when you compute its log: it’s very close to a Gaussian distribution (i.e., bell-shaped).
+  # Another approach to handle heavy-tailed features consists in bucketizing the feature. This means chopping its distribution into roughly equal-sized buckets, and replacing each feature value with the index of the bucket it belongs to, much like we did to create the income_cat feature (although we only used it for stratified sampling). For example, you could replace each value with its percentile. Bucketizing with equal-sized buckets results in a feature with an almost uniform distribution, so there’s no need for further scaling, or you can just divide by the number of buckets to force the values to the 0–1 range.
+  # When a feature has a multimodal distribution (i.e., with two or more clear peaks, called modes), such as the housing_median_age feature, it can also be helpful to bucketize it, but this time treating the bucket IDs as categories, rather than as numerical values. This means that the bucket indices must be encoded, for example using a OneHotEncoder (so you usually don’t want to use too many buckets). This approach will allow the regression model to more easily learn different rules for different ranges of this feature value. For example, perhaps houses built around 35 years ago have a peculiar style that fell out of fashion, and therefore they’re cheaper than their age alone would suggest.
